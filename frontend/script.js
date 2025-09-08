@@ -4,7 +4,7 @@ const userId = localStorage.getItem('devops_user_id') || crypto.randomUUID();
 localStorage.setItem('devops_user_id', userId);
 
 // Backend API URL (for local development)
-const BACKEND_URL = "http://127.0.0.1:5000";
+const BACKEND_URL = "http://localhost:5000";
 
 let currentSessionQuestions = [];
 let totalQuestions = 0;

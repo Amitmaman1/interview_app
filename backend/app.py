@@ -90,7 +90,7 @@ def submit_answer():
                 {"role": "system", "content": "You are a DevOps expert providing feedback on interview questions."},
                 {"role": "user", "content": prompt}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",  # Updated model
             response_format={"type": "json_object"}
         )
 
@@ -135,7 +135,7 @@ def submit_session():
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",  # Updated model
             response_format={"type": "json_object"}
         )
 
@@ -148,4 +148,4 @@ def submit_session():
         return jsonify({"error": "An error occurred while finalizing the session"}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
