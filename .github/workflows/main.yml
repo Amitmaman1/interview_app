@@ -2,6 +2,10 @@ name: build and push images to ecr
 on:
   push:
     branches: [ dev ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+
 
 jobs:
   build-and-push:
