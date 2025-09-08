@@ -24,18 +24,13 @@ jobs:
       - name: Build and push backend and frontend images
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          ECR_REPOSITORY: my_app
+          VERSION: v${{ github.run_number }}
         run: |
-          COMMIT_SHA=${GITHUB_SHA::8}
+ 
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$VERSION ./backend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$VERSION
 
 
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest \
-                       -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$COMMIT_SHA ./backend
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$COMMIT_SHA
-
-
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest \
-                       -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$COMMIT_SHA ./frontend
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$COMMIT_SHA
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$VERSION ./frontend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$VERSION
