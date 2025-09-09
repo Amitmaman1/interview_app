@@ -8,6 +8,24 @@ on:
 
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pytest
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm install
+          npm test
+
+
   build-and-push:
     runs-on: ubuntu-latest
     steps:
@@ -29,12 +47,12 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: my_app
-          VERSION: v${{ github.run_number }}
+          VERSION: ${{ github.sha }}
         run: |
- 
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$VERSION ./backend
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$VERSION
+          SHORT_SHA=$(echo $VERSION | cut -c1-8)
 
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-$SHORT_SHA ./backend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-$SHORT_SHA
 
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$VERSION ./frontend
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$VERSION
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$SHORT_SHA ./frontend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-$SHORT_SHA
