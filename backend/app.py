@@ -13,14 +13,20 @@ load_dotenv()
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-# Initialize Supabase client
+# Initialize Supabase client only if environment variables are available
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = None
 
-# Initialize Groq client
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Initialize Groq client only if API key is available
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY)
+groq_client = None
+
+if GROQ_API_KEY:
+    groq_client = Groq(api_key=GROQ_API_KEY)
 
 @app.route("/")
 def serve_frontend():
@@ -32,6 +38,9 @@ def serve_static(path):
 
 @app.route("/questions", methods=["GET"])
 def get_questions():
+    if not supabase:
+        return jsonify({"error": "Database not configured"}), 500
+        
     topic = request.args.get("topic")
     difficulty = request.args.get("difficulty")
     count = int(request.args.get("count", 5))  # Convert count to integer
@@ -61,6 +70,9 @@ def get_questions():
 
 @app.route("/submit-answer", methods=["POST"])
 def submit_answer():
+    if not supabase or not groq_client:
+        return jsonify({"error": "Service not configured"}), 500
+        
     data = request.json
     user_id = data.get("user_id")
     question_id = data.get("question_id")
@@ -112,6 +124,9 @@ def submit_answer():
 
 @app.route("/submit-session", methods=["POST"])
 def submit_session():
+    if not groq_client:
+        return jsonify({"error": "Service not configured"}), 500
+        
     data = request.json
     user_id = data.get("user_id")
     session_answers = data.get("session_answers")
