@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # New: Load environment variables from .env file
 load_dotenv()
-
+ 
 # Initialize Flask and CORS
 app = Flask(__name__, static_folder='static')
 CORS(app)
