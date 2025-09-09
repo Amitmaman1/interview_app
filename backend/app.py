@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from supabase import create_client, Client
 from groq import Groq
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 
 # New: Load environment variables from .env file
 load_dotenv()
