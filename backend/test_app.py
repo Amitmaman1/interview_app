@@ -1,6 +1,6 @@
 import pytest
 import json
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from app import app
 
 @pytest.fixture
@@ -8,6 +8,29 @@ def client():
     app.config['TESTING'] = True
     with app.test_client() as client:
         yield client
+
+@pytest.fixture
+def mock_supabase():
+    mock = Mock()
+    # Create a chain of mock returns
+    mock.from_.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = Mock(
+        data=[{"id": 1, "question_text": "Test Question", "topic": "DevOps", "difficulty": "easy"}]
+    )
+    return mock
+
+@pytest.fixture
+def mock_groq():
+    mock = Mock()
+    mock.chat.completions.create.return_value = Mock(
+        choices=[
+            Mock(
+                message=Mock(
+                    content='{"score": 8, "summary": "Good answer", "corrections": "None"}'
+                )
+            )
+        ]
+    )
+    return mock
 
 def test_home_route(client):
     """Test that the home route works"""
@@ -68,13 +91,20 @@ def test_submit_session_missing_data(mock_get_user, client):
 # New tests based on code block suggestions
 
 def test_get_questions(client, mock_supabase):
-    response = mock_supabase.from_().select().eq().eq().execute
-    response.data = [
-        {"id": 1, "question": "Test Question"}
-    ]
+    with patch('app.supabase', mock_supabase):
+        response = client.get('/questions?topic=DevOps&difficulty=easy&count=1')
+        assert response.status_code == 200
+        assert len(response.json) == 1
+        assert 'question_text' in response.json[0]
 
 def test_submit_answer(client, mock_supabase, mock_groq):
-    mock_supabase.from_().select().eq().single().execute.data = {
-        "id": 1,
-        "question_text": "Test"
-    }
+    with patch('app.supabase', mock_supabase), patch('app.groq_client', mock_groq):
+        response = client.post('/submit-answer', 
+            json={
+                "question_id": 1,
+                "user_answer": "Test answer"
+            },
+            headers={"Authorization": "Bearer fake_token"}
+        )
+        assert response.status_code == 200
+        assert "score" in response.json
