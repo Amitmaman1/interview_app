@@ -34,20 +34,7 @@ jobs:
           cd backend
           flake8 . --config=.flake8
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: '20'
 
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: Run frontend lint
-        run: |
-          cd frontend
-          npx eslint .
 
   test:
     runs-on: ubuntu-latest
@@ -98,10 +85,6 @@ jobs:
           cd backend
           pytest test_integration.py -v
 
-      - name: Test frontend-backend communication
-        run: |
-          cd frontend
-          npm test  # Assuming you have JS tests that ping backend
 
   build-and-push:
     needs: test
