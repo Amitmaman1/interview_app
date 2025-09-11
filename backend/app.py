@@ -33,7 +33,7 @@ def get_user_from_token(request):
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return None, (
-            jsonify({"error": "Missing Authorization header"}), 
+            jsonify({"error": "Missing Authorization header"}),
             401
         )
     
@@ -136,28 +136,29 @@ def submit_answer():
             return jsonify({"error": "Question not found"}), 404
 
         prompt = (
-            f"You are a DevOps interview assistant. Evaluate this answer as if it were "
-            f"given in a real-world interview. Focus on the candidate's core understanding, "
-            f"practical knowledge, and ability to articulate key concepts concisely. Do not "
-            f"expect exhaustive, textbook-level detail. Be lenient with minor omissions if "
-            f"the fundamental concept is grasped.\n\n"
+            "You are a DevOps interview assistant. Evaluate this answer as if it "
+            "were given in a real-world interview. Focus on the candidate's core "
+            "understanding, practical knowledge, and ability to articulate key "
+            "concepts concisely. Do not expect exhaustive, textbook-level detail. "
+            "Be lenient with minor omissions if the fundamental concept is "
+            f"grasped.\n\n"
             f"Question: {question['question_text']}\n"
             f"User's Answer: {user_answer}\n\n"
-            f"Please provide feedback on the user's answer. Your response should be a JSON "
-            f"object with the following structure:\n"
-            f"{{\"score\": int, \"summary\": \"string\", \"corrections\": \"string\"}}\n"
-            f"The score should be from 1 to 10, reflecting a realistic interview grade "
-            f"based on accuracy and practical understanding. The summary should evaluate "
-            f"the answer's strengths. The corrections should suggest improvements or "
-            f"additional points to consider, but avoid penalizing for brevity if the "
-            f"answer is otherwise solid."
+            "Please provide feedback on the user's answer. Your response should be "
+            "a JSON object with the following structure:\n"
+            '{"score": int, "summary": "string", "corrections": "string"}\n'
+            "The score should be from 1 to 10, reflecting a realistic interview "
+            "grade based on accuracy and practical understanding."
         )
 
         chat_completion = groq_client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a DevOps expert providing feedback on interview questions."
+                    "content": (
+                        "You are a DevOps expert providing feedback on "
+                        "interview questions."
+                    )
                 },
                 {"role": "user", "content": prompt}
             ],
@@ -196,14 +197,13 @@ def submit_session():
         overall_score = round(total_score / len(session_answers), 1)
 
         prompt = (
-            f"You are a DevOps expert. The user has completed a practice interview "
-            f"session. Their overall performance is an average score of {overall_score} "
-            f"out of 10. Their individual answers and feedback were:\n\n"
+            "You are a DevOps expert. The user has completed a practice "
+            f"interview session. Their overall performance is {overall_score} "
+            "out of 10. Their individual answers and feedback were:\n\n"
             f"{json.dumps(session_answers, indent=2)}\n\n"
-            f"Provide a short, encouraging summary of their overall performance and "
-            f"suggest areas for improvement. Your response should be a JSON object "
-            f"with the following keys: 'overall_score' (the calculated score), and "
-            f"'final_feedback' (the string summary)."
+            "Provide a short, encouraging summary of their overall performance "
+            "and suggest areas for improvement. Your response should be a JSON "
+            'object with "overall_score" and "final_feedback" keys.'
         )
 
         chat_completion = groq_client.chat.completions.create(

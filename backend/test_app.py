@@ -64,3 +64,17 @@ def test_submit_session_missing_data(mock_get_user, client):
     assert response.status_code == 400
     data = json.loads(response.data)
     assert "Missing" in data['error']
+
+# New tests based on code block suggestions
+
+def test_get_questions(client, mock_supabase):
+    response = mock_supabase.from_().select().eq().eq().execute
+    response.data = [
+        {"id": 1, "question": "Test Question"}
+    ]
+
+def test_submit_answer(client, mock_supabase, mock_groq):
+    mock_supabase.from_().select().eq().single().execute.data = {
+        "id": 1,
+        "question_text": "Test"
+    }
