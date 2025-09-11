@@ -32,7 +32,10 @@ if GROQ_API_KEY:
 def get_user_from_token(request):
     auth_header = request.headers.get('Authorization')
     if not auth_header:
-        return None, (jsonify({"error": "Missing Authorization header"}), 401)
+        return None, (
+            jsonify({"error": "Missing Authorization header"}), 
+            401
+        )
     
     parts = auth_header.split()
     if parts[0].lower() != 'bearer' or len(parts) != 2:
@@ -45,7 +48,11 @@ def get_user_from_token(request):
         if user_response and user_response.user:
             return user_response.user, None
         else:
-            return None, (jsonify({"error": "Invalid or expired token"}), 401)
+            return None, (
+                jsonify({"error": "Invalid or expired token"}),
+                401
+            )
+
     except Exception as e:
         return None, (jsonify({"error": f"Token validation failed: {str(e)}"}), 401)
 
@@ -85,11 +92,19 @@ def get_questions():
         questions = response.data
         
         if not questions:
-            return jsonify({"message": "No questions found for the specified topic and difficulty."} ), 404
+            return (
+                jsonify({
+                    "message": "No questions found for the specified topic and difficulty."
+                }),
+                404
+            )
         
         # Randomly select 'count' number of questions
         import random
-        selected_questions = random.sample(questions, min(count, len(questions)))
+        selected_questions = random.sample(
+            questions,
+            min(count, len(questions))
+        )
         
         return jsonify(selected_questions), 200
         
@@ -121,15 +136,32 @@ def submit_answer():
             return jsonify({"error": "Question not found"}), 404
 
         prompt = (
-            f"You are a DevOps interview assistant. Evaluate this answer as if it were given in a real-world interview. Focus on the candidate's core understanding, practical knowledge, and ability to articulate key concepts concisely. Do not expect exhaustive, textbook-level detail. Be lenient with minor omissions if the fundamental concept is grasped.\n\nQuestion: {question['question_text']}\nUser's Answer: {user_answer}\n\nPlease provide feedback on the user's answer. Your response should be a JSON object with the following structure:\n{{\"score\": int, \"summary\": \"string\", \"corrections\": \"string\"}}\nThe score should be from 1 to 10, reflecting a realistic interview grade based on accuracy and practical understanding. The summary should evaluate the answer's strengths. The corrections should suggest improvements or additional points to consider, but avoid penalizing for brevity if the answer is otherwise solid."
+            f"You are a DevOps interview assistant. Evaluate this answer as if it were "
+            f"given in a real-world interview. Focus on the candidate's core understanding, "
+            f"practical knowledge, and ability to articulate key concepts concisely. Do not "
+            f"expect exhaustive, textbook-level detail. Be lenient with minor omissions if "
+            f"the fundamental concept is grasped.\n\n"
+            f"Question: {question['question_text']}\n"
+            f"User's Answer: {user_answer}\n\n"
+            f"Please provide feedback on the user's answer. Your response should be a JSON "
+            f"object with the following structure:\n"
+            f"{{\"score\": int, \"summary\": \"string\", \"corrections\": \"string\"}}\n"
+            f"The score should be from 1 to 10, reflecting a realistic interview grade "
+            f"based on accuracy and practical understanding. The summary should evaluate "
+            f"the answer's strengths. The corrections should suggest improvements or "
+            f"additional points to consider, but avoid penalizing for brevity if the "
+            f"answer is otherwise solid."
         )
 
         chat_completion = groq_client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are a DevOps expert providing feedback on interview questions."},
+                {
+                    "role": "system",
+                    "content": "You are a DevOps expert providing feedback on interview questions."
+                },
                 {"role": "user", "content": prompt}
             ],
-            model="llama-3.1-8b-instant",  # Updated model
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"}
         )
 
@@ -164,18 +196,25 @@ def submit_session():
         overall_score = round(total_score / len(session_answers), 1)
 
         prompt = (
-            f"You are a DevOps expert. The user has completed a practice interview session. Their overall performance is an average score of {overall_score} out of 10. "
-            f"Their individual answers and feedback were:\n\n"
+            f"You are a DevOps expert. The user has completed a practice interview "
+            f"session. Their overall performance is an average score of {overall_score} "
+            f"out of 10. Their individual answers and feedback were:\n\n"
             f"{json.dumps(session_answers, indent=2)}\n\n"
-            f"Provide a short, encouraging summary of their overall performance and suggest areas for improvement. Your response should be a JSON object with the following keys: 'overall_score' (the calculated score), and 'final_feedback' (the string summary)."
+            f"Provide a short, encouraging summary of their overall performance and "
+            f"suggest areas for improvement. Your response should be a JSON object "
+            f"with the following keys: 'overall_score' (the calculated score), and "
+            f"'final_feedback' (the string summary)."
         )
 
         chat_completion = groq_client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant."
+                },
                 {"role": "user", "content": prompt}
             ],
-            model="llama-3.1-8b-instant",  # Updated model
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"}
         )
 
@@ -189,4 +228,4 @@ def submit_session():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-    
+
