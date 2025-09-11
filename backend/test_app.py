@@ -42,25 +42,25 @@ def test_questions_route_with_mock(mock_supabase, client):
     assert data[0]['topic'] == 'CI/CD'
 
 # -------------------
-# Updated tests with mocked auth
+# Updated tests with mocked get_user_from_token
 # -------------------
 
-@patch('app.verify_auth_token')
-def test_submit_answer_missing_data(mock_verify, client):
+@patch('app.get_user_from_token')
+def test_submit_answer_missing_data(mock_get_user, client):
     """Test submit answer with missing data (mock auth)"""
-    mock_verify.return_value = {"user_id": "123"}  # simulate successful auth
-    headers = {"Authorization": "Bearer test-token"}
-    response = client.post('/submit-answer', json={}, headers=headers)
+    # Mock authentication to return a fake user
+    mock_get_user.return_value = ({"id": "123"}, None)
+    response = client.post('/submit-answer', json={})
     assert response.status_code == 400
     data = json.loads(response.data)
     assert "Missing" in data['error']
 
-@patch('app.verify_auth_token')
-def test_submit_session_missing_data(mock_verify, client):
+@patch('app.get_user_from_token')
+def test_submit_session_missing_data(mock_get_user, client):
     """Test submit session with missing data (mock auth)"""
-    mock_verify.return_value = {"user_id": "123"}  # simulate successful auth
-    headers = {"Authorization": "Bearer test-token"}
-    response = client.post('/submit-session', json={}, headers=headers)
+    # Mock authentication to return a fake user
+    mock_get_user.return_value = ({"id": "123"}, None)
+    response = client.post('/submit-session', json={})
     assert response.status_code == 400
     data = json.loads(response.data)
     assert "Missing" in data['error']
