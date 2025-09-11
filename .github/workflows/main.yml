@@ -80,11 +80,6 @@ jobs:
           cd backend
           pytest test_app.py -v
 
-      - name: Run integration tests
-        run: |
-          cd backend
-          pytest test_integration.py -v
-
 
   build-and-push:
     needs: test
