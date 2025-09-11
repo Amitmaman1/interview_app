@@ -6,6 +6,7 @@ from supabase import create_client, Client
 from groq import Groq
 from dotenv import load_dotenv 
 
+
 # New: Load environment variables from .env file
 load_dotenv() 
 
