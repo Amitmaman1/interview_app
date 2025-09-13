@@ -18,6 +18,7 @@ const sidebar = document.getElementById('sidebar');
 const sessionList = document.getElementById('session-list');
 const userEmailSpan = document.getElementById('user-email');
 const logoutBtn = document.getElementById('logout-btn');
+const deleteAllBtn = document.getElementById('delete-all-btn');
 
 const sessionControls = document.getElementById("session-controls");
 const startSessionBtn = document.getElementById("start-session-btn");
@@ -78,96 +79,137 @@ logoutBtn.addEventListener('click', async () => {
     }
 });
 
+deleteAllBtn.addEventListener('click', async () => {
+    if (!supabase) return;
+
+    const confirmed = confirm("Are you sure you want to delete ALL sessions? This action cannot be undone.");
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("User not authenticated");
+
+        const response = await fetch(`${BACKEND_URL}/sessions/all`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (response.ok) {
+            await loadPastSessions();
+            showMessage('All sessions have been deleted.', 'info');
+        } else {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to delete sessions.' }));
+            showMessage(errorData.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting all sessions:', error);
+        showMessage('An error occurred while deleting sessions.', 'error');
+    }
+});
+
 // --- Data Fetching ---
 async function loadPastSessions() {
     if (!supabase || !user) return;
 
-    const { data, error } = await supabase
-        .from('sessions')
-        .select('id, topic, difficulty, final_score, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("User not authenticated");
 
-    if (error) {
+        const response = await fetch(`${BACKEND_URL}/sessions`, {
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch sessions');
+        }
+
+        const data = await response.json();
+
+        sessionList.innerHTML = '';
+        if (data.length === 0) {
+            sessionList.innerHTML = '<p class="text-sm text-gray-500">No past sessions found.</p>';
+            return;
+        }
+
+        data.forEach(session => {
+            const sessionEl = document.createElement('div');
+            sessionEl.className = 'flex items-center justify-between p-2 rounded-md hover:bg-gray-100';
+
+            const sessionLink = document.createElement('a');
+            sessionLink.href = '#';
+            sessionLink.className = 'text-sm truncate flex-grow';
+            sessionLink.textContent = `${session.topic} (${session.difficulty}) - ${new Date(session.created_at).toLocaleDateString()}`;
+            sessionLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                displayPastSession(session.id);
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'ml-2 text-red-500 hover:text-red-700';
+            deleteBtn.innerHTML = '&times;'; // A simple 'x' icon
+            deleteBtn.title = 'Delete session';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteSession(session.id);
+            });
+
+            sessionEl.appendChild(sessionLink);
+            sessionEl.appendChild(deleteBtn);
+            sessionList.appendChild(sessionEl);
+        });
+    } catch (error) {
         console.error('Error fetching sessions:', error);
         showMessage('Could not load past sessions.', 'error');
-        return;
     }
-
-    sessionList.innerHTML = '';
-    if (data.length === 0) {
-        sessionList.innerHTML = '<p class="text-sm text-gray-500">No past sessions found.</p>';
-        return;
-    }
-
-    data.forEach(session => {
-        const sessionEl = document.createElement('div');
-        sessionEl.className = 'flex items-center justify-between p-2 rounded-md hover:bg-gray-100';
-
-        const sessionLink = document.createElement('a');
-        sessionLink.href = '#';
-        sessionLink.className = 'text-sm truncate flex-grow';
-        sessionLink.textContent = `${session.topic} (${session.difficulty}) - ${new Date(session.created_at).toLocaleDateString()}`;
-        sessionLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            displayPastSession(session.id);
-        });
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'ml-2 text-red-500 hover:text-red-700';
-        deleteBtn.innerHTML = '&times;'; // A simple 'x' icon
-        deleteBtn.title = 'Delete session';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteSession(session.id);
-        });
-
-        sessionEl.appendChild(sessionLink);
-        sessionEl.appendChild(deleteBtn);
-        sessionList.appendChild(sessionEl);
-    });
 }
 
 async function displayPastSession(sessionId) {
     if (!supabase) return;
     hideMessage();
 
-    const { data, error } = await supabase
-        .from('sessions')
-        .select(`
-            *,
-            answers ( 
-                *,
-                feedback ( * ),
-                questions ( question_text )
-            )
-        `)
-        .eq('id', sessionId)
-        .single();
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("User not authenticated");
 
-    if (error) {
+        const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch session details');
+        }
+
+        const data = await response.json();
+
+        // Repopulate the data structures needed for the summary view
+        currentSessionQuestions = data.answers.map(a => ({ id: a.question_id, question_text: a.question_text }));
+        sessionAnswers = data.answers.map(a => ({
+            question_id: a.question_id,
+            user_answer: a.user_answer,
+            feedback: a.ai_feedback
+        }));
+
+        // Show the final grade screen and hide other elements
+        finalScoreSpan.textContent = data.final_score;
+        finalFeedback.textContent = data.final_feedback;
+        sessionGrade.classList.remove("hidden");
+        questionArea.classList.add("hidden");
+        sessionControls.classList.add("hidden");
+        individualFeedback.classList.add("hidden");
+
+        displaySessionSummary();
+    } catch (error) {
         console.error('Error fetching past session:', error);
         showMessage('Could not load the selected session.', 'error');
-        return;
     }
-
-    // Repopulate the data structures needed for the summary view
-    currentSessionQuestions = data.answers.map(a => a.questions);
-    sessionAnswers = data.answers.map(a => ({
-        question_id: a.question_id,
-        user_answer: a.user_answer,
-        feedback: a.feedback[0].ai_feedback
-    }));
-
-    // Show the final grade screen and hide other elements
-    finalScoreSpan.textContent = data.final_score;
-    finalFeedback.textContent = data.final_feedback;
-    sessionGrade.classList.remove("hidden");
-    questionArea.classList.add("hidden");
-    sessionControls.classList.add("hidden");
-    individualFeedback.classList.add("hidden");
-
-    displaySessionSummary();
 }
 
 async function deleteSession(sessionId) {
@@ -178,17 +220,26 @@ async function deleteSession(sessionId) {
         return;
     }
 
-    const { error } = await supabase
-        .from('sessions')
-        .delete()
-        .eq('id', sessionId);
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("User not authenticated");
 
-    if (error) {
+        const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (response.ok) {
+            await loadPastSessions();
+        } else {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to delete session.' }));
+            showMessage(errorData.error, 'error');
+        }
+    } catch (error) {
         console.error('Error deleting session:', error);
-        showMessage('Could not delete the session.', 'error');
-    } else {
-        // Refresh the list to show the session has been removed
-        await loadPastSessions();
+        showMessage('An error occurred while deleting the session.', 'error');
     }
 }
 
@@ -276,13 +327,17 @@ const submitFinalSession = async () => {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({ session_answers: sessionAnswers })
+            body: JSON.stringify({
+                session_answers: sessionAnswers,
+                topic: topicSelect.value,
+                difficulty: difficultySelect.value
+            })
         });
 
         const finalGrade = await response.json();
         
         if (response.ok) {
-            await saveSessionToDb(finalGrade);
+            // await saveSessionToDb(finalGrade); // Removed redundant call
             finalScoreSpan.textContent = finalGrade.overall_score;
             finalFeedback.textContent = finalGrade.final_feedback;
             sessionGrade.classList.remove("hidden");
@@ -330,7 +385,6 @@ async function saveSessionToDb(finalGrade) {
     // 2. Prepare answer and feedback data
     const answersToInsert = sessionAnswers.map((answer, index) => ({
         session_id: sessionId,
-        user_id: user.id,
         question_id: currentSessionQuestions[index].id,
         user_answer: answer.user_answer
     }));
