@@ -194,7 +194,7 @@ async function displayPastSession(sessionId) {
         sessionAnswers = data.answers.map(a => ({
             question_id: a.question_id,
             user_answer: a.user_answer,
-            feedback: a.ai_feedback
+            feedback: { score: a.score, summary: a.summary, corrections: a.corrections }
         }));
 
         // Show the final grade screen and hide other elements
@@ -338,7 +338,7 @@ const submitFinalSession = async () => {
         
         if (response.ok) {
             // await saveSessionToDb(finalGrade); // Removed redundant call
-            finalScoreSpan.textContent = finalGrade.overall_score;
+            finalScoreSpan.textContent = finalGrade.final_score;
             finalFeedback.textContent = finalGrade.final_feedback;
             sessionGrade.classList.remove("hidden");
             questionArea.classList.add("hidden");
