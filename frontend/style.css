@@ -2,3 +2,36 @@
 body {
     font-family: 'Inter', sans-serif;
 }
+
+/* Custom subtle grays used via utility classes reference */
+.bg-gray-750 { background-color: #2d3748; }
+.bg-gray-850 { background-color: #1f2937; }
+
+/* Tweak scrollbars for dark theme */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #111827;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 8px; }
+*::-webkit-scrollbar-track { background: #111827; }
+
+/* Session list item hover to keep text visible */
+#session-list a {
+    color: #e5e7eb;
+}
+#session-list .hover\:bg-gray-100:hover,
+#session-list .hover\:bg-gray-700:hover {
+    background-color: #374151 !important;
+}
+#session-list .truncate {
+    display: block;
+    min-width: 0;
+}
+
+/* Glassy cards */
+.glass-card {
+    background: linear-gradient(135deg, rgba(31,41,55,0.85), rgba(17,24,39,0.85));
+    border: 1px solid rgba(75,85,99,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}

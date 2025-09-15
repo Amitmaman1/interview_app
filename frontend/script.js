@@ -13,12 +13,23 @@ let sessionAnswers = [];
 
 // DOM Elements
 const appContainer = document.getElementById('app-container');
+const topNav = document.getElementById('top-nav');
+const navHomeBtn = document.getElementById('nav-home-btn');
+const navProfileBtn = document.getElementById('nav-profile-btn');
 const loadingIndicator = document.getElementById('loading-indicator');
 const sidebar = document.getElementById('sidebar');
 const sessionList = document.getElementById('session-list');
 const userEmailSpan = document.getElementById('user-email');
 const logoutBtn = document.getElementById('logout-btn');
 const deleteAllBtn = document.getElementById('delete-all-btn');
+// Profile panel elements
+const profileNameEl = document.getElementById('profile-name');
+const profileEmailEl = document.getElementById('profile-email');
+const profileAboutTextarea = document.getElementById('profile-about');
+const profileSaveBtn = document.getElementById('profile-save');
+const profileAvatarEl = document.getElementById('profile-avatar');
+const simulatorView = document.getElementById('simulator-view');
+const profileSection = document.getElementById('profile-section');
 
 const sessionControls = document.getElementById("session-controls");
 const startSessionBtn = document.getElementById("start-session-btn");
@@ -45,6 +56,11 @@ const startNewSessionBtn = document.getElementById("start-new-session-btn");
 
 const sessionAnswersList = document.getElementById("session-answers-list");
 const messageBox = document.getElementById("message-box");
+// Confirm modal elements
+const confirmModal = document.getElementById('confirm-modal');
+const confirmMessageEl = document.getElementById('confirm-message');
+const confirmCancelBtn = document.getElementById('confirm-cancel');
+const confirmConfirmBtn = document.getElementById('confirm-confirm');
 
 // --- Initialization and Auth ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -63,7 +79,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         user = session.user;
         userEmailSpan.textContent = user.email;
+        hydrateProfilePanel(user);
         appContainer.classList.remove('hidden');
+        topNav.classList.remove('hidden');
         loadingIndicator.classList.add('hidden');
         await loadPastSessions();
     }
@@ -82,10 +100,12 @@ logoutBtn.addEventListener('click', async () => {
 deleteAllBtn.addEventListener('click', async () => {
     if (!supabase) return;
 
-    const confirmed = confirm("Are you sure you want to delete ALL sessions? This action cannot be undone.");
-    if (!confirmed) {
-        return;
-    }
+    const confirmed = await confirmAction({
+        message: 'Delete ALL sessions? This will permanently remove all your interview sessions.',
+        confirmText: 'Delete All',
+        danger: true
+    });
+    if (!confirmed) return;
 
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -139,19 +159,20 @@ async function loadPastSessions() {
 
         data.forEach(session => {
             const sessionEl = document.createElement('div');
-            sessionEl.className = 'flex items-center justify-between p-2 rounded-md hover:bg-gray-100';
+            sessionEl.className = 'flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors';
 
             const sessionLink = document.createElement('a');
             sessionLink.href = '#';
-            sessionLink.className = 'text-sm truncate flex-grow';
+            sessionLink.className = 'text-sm truncate flex-grow text-gray-100';
             sessionLink.textContent = `${session.topic} (${session.difficulty}) - ${new Date(session.created_at).toLocaleDateString()}`;
+            sessionLink.title = `${session.topic} (${session.difficulty}) - ${new Date(session.created_at).toLocaleString()}`;
             sessionLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 displayPastSession(session.id);
             });
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'ml-2 text-red-500 hover:text-red-700';
+            deleteBtn.className = 'ml-2 text-red-400 hover:text-red-300 flex-shrink-0';
             deleteBtn.innerHTML = '&times;'; // A simple 'x' icon
             deleteBtn.title = 'Delete session';
             deleteBtn.addEventListener('click', (e) => {
@@ -215,10 +236,12 @@ async function displayPastSession(sessionId) {
 async function deleteSession(sessionId) {
     if (!supabase) return;
 
-    const confirmed = confirm("Are you sure you want to delete this session? This action cannot be undone.");
-    if (!confirmed) {
-        return;
-    }
+    const confirmed = await confirmAction({
+        message: 'Delete this session? This will permanently remove the selected session.',
+        confirmText: 'Delete',
+        danger: true
+    });
+    if (!confirmed) return;
 
     try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -265,6 +288,15 @@ const setLoadingState = (isLoading, buttonType) => {
 };
 
 // --- Core Application Logic ---
+function shuffleArray(items) {
+    const array = items.slice();
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 const fetchAndDisplayQuestions = async () => {
     setLoadingState(true, "start");
     hideMessage();
@@ -273,11 +305,12 @@ const fetchAndDisplayQuestions = async () => {
     const numQuestions = parseInt(numQuestionsInput.value);
 
     try {
-        const response = await fetch(`${BACKEND_URL}/questions?topic=${topic}&difficulty=${difficulty}&count=${numQuestions}`);
+        const response = await fetch(`${BACKEND_URL}/questions?topic=${encodeURIComponent(topic)}&difficulty=${encodeURIComponent(difficulty)}&count=${numQuestions}&_t=${Date.now()}`);
         const questions = await response.json();
         
         if (response.ok && questions.length > 0) {
-            currentSessionQuestions = questions;
+            const randomized = shuffleArray(questions);
+            currentSessionQuestions = randomized.slice(0, numQuestions);
             totalQuestions = questions.length;
             currentQuestionIndex = 0;
             sessionAnswers = [];
@@ -455,6 +488,85 @@ const displaySessionSummary = () => {
     });
 };
 
+// --- Profile Panel Logic ---
+function getLocalProfileKey(userId) {
+    return `profile:${userId}`;
+}
+
+function hydrateProfilePanel(currentUser) {
+    if (!profileEmailEl || !profileNameEl) return;
+    const email = currentUser.email || '';
+    const nameFromEmail = email.includes('@') ? email.split('@')[0] : email;
+    const profileKey = getLocalProfileKey(currentUser.id);
+    let stored = {};
+    try {
+        stored = JSON.parse(localStorage.getItem(profileKey) || '{}');
+    } catch (_) {
+        stored = {};
+    }
+    const displayName = stored.name || nameFromEmail;
+    const about = stored.about || '';
+
+    profileNameEl.textContent = displayName;
+    profileEmailEl.textContent = email;
+    if (profileAboutTextarea) profileAboutTextarea.value = about;
+    if (profileAvatarEl) {
+        const initials = (displayName || email).trim().slice(0, 2).toUpperCase();
+        profileAvatarEl.textContent = initials;
+    }
+
+    if (profileSaveBtn) {
+        profileSaveBtn.onclick = () => {
+            const newAbout = profileAboutTextarea ? profileAboutTextarea.value : '';
+            const newName = displayName; // Could be extended to editable later
+            const payload = { name: newName, about: newAbout, updatedAt: new Date().toISOString() };
+            localStorage.setItem(profileKey, JSON.stringify(payload));
+            // Provide quick visual feedback
+            profileSaveBtn.textContent = 'Saved';
+            profileSaveBtn.disabled = true;
+            setTimeout(() => {
+                profileSaveBtn.textContent = 'Save';
+                profileSaveBtn.disabled = false;
+            }, 1200);
+        };
+    }
+}
+
+// --- Confirm Modal Helper ---
+function confirmAction({ message, confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
+    return new Promise((resolve) => {
+        if (!confirmModal || !confirmMessageEl || !confirmCancelBtn || !confirmConfirmBtn) {
+            const fallback = window.confirm(message || 'Are you sure?');
+            resolve(fallback);
+            return;
+        }
+        confirmMessageEl.textContent = message || 'Are you sure?';
+        confirmConfirmBtn.textContent = confirmText;
+        confirmCancelBtn.textContent = cancelText;
+        confirmConfirmBtn.classList.toggle('bg-rose-600', danger);
+        confirmConfirmBtn.classList.toggle('hover:bg-rose-700', danger);
+        confirmConfirmBtn.classList.toggle('bg-indigo-600', !danger);
+        confirmConfirmBtn.classList.toggle('hover:bg-indigo-700', !danger);
+
+        const cleanup = () => {
+            confirmModal.classList.add('hidden');
+            confirmCancelBtn.onclick = null;
+            confirmConfirmBtn.onclick = null;
+        };
+
+        confirmCancelBtn.onclick = () => {
+            cleanup();
+            resolve(false);
+        };
+        confirmConfirmBtn.onclick = () => {
+            cleanup();
+            resolve(true);
+        };
+        confirmModal.classList.remove('hidden');
+        confirmModal.classList.add('flex');
+    });
+}
+
 // --- Event Listeners ---
 startSessionBtn.addEventListener("click", fetchAndDisplayQuestions);
 
@@ -536,3 +648,20 @@ startNewSessionBtn.addEventListener("click", () => {
     sessionGrade.classList.add("hidden");
     individualFeedback.classList.add("hidden"); // Hide individual feedback
 });
+
+// --- Navigation Handlers ---
+if (navHomeBtn && navProfileBtn && simulatorView && profileSection) {
+    navHomeBtn.addEventListener('click', () => {
+        simulatorView.classList.remove('hidden');
+        profileSection.classList.add('hidden');
+        navHomeBtn.classList.add('bg-gray-800');
+        navHomeBtn.classList.remove('bg-gray-700');
+        navProfileBtn.classList.remove('bg-gray-800');
+    });
+    navProfileBtn.addEventListener('click', () => {
+        simulatorView.classList.add('hidden');
+        profileSection.classList.remove('hidden');
+        navHomeBtn.classList.remove('bg-gray-800');
+        navProfileBtn.classList.add('bg-indigo-600');
+    });
+}
