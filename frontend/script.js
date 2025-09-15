@@ -16,6 +16,7 @@ const appContainer = document.getElementById('app-container');
 const topNav = document.getElementById('top-nav');
 const navHomeBtn = document.getElementById('nav-home-btn');
 const navProfileBtn = document.getElementById('nav-profile-btn');
+const navProfileAvatar = document.getElementById('nav-profile-avatar');
 const loadingIndicator = document.getElementById('loading-indicator');
 const sidebar = document.getElementById('sidebar');
 const sessionList = document.getElementById('session-list');
@@ -28,6 +29,20 @@ const profileEmailEl = document.getElementById('profile-email');
 const profileAboutTextarea = document.getElementById('profile-about');
 const profileSaveBtn = document.getElementById('profile-save');
 const profileAvatarEl = document.getElementById('profile-avatar');
+const profileRoleInput = document.getElementById('profile-role');
+const profileLocationInput = document.getElementById('profile-location');
+const profileYearsInput = document.getElementById('profile-years');
+const profileSkillsInput = document.getElementById('profile-skills');
+const profileAvgScoreEl = document.getElementById('profile-avg-score');
+const avatarFileInput = document.getElementById('avatar-file');
+const avatarRemoveBtn = document.getElementById('avatar-remove');
+let avatarCropModal = document.getElementById('avatar-crop-modal');
+let avatarCropImage = document.getElementById('avatar-crop-image');
+let avatarCropCancel = document.getElementById('avatar-crop-cancel');
+let avatarCropSave = document.getElementById('avatar-crop-save');
+let avatarCrop1x1 = document.getElementById('avatar-crop-1x1');
+let avatarCrop4x5 = document.getElementById('avatar-crop-4x5');
+let avatarCropFree = document.getElementById('avatar-crop-free');
 const simulatorView = document.getElementById('simulator-view');
 const profileSection = document.getElementById('profile-section');
 
@@ -79,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         user = session.user;
         userEmailSpan.textContent = user.email;
-        hydrateProfilePanel(user);
+        await hydrateProfilePanel(user);
         appContainer.classList.remove('hidden');
         topNav.classList.remove('hidden');
         loadingIndicator.classList.add('hidden');
@@ -168,6 +183,11 @@ async function loadPastSessions() {
             sessionLink.title = `${session.topic} (${session.difficulty}) - ${new Date(session.created_at).toLocaleString()}`;
             sessionLink.addEventListener('click', (e) => {
                 e.preventDefault();
+                // Ensure simulator view is visible when opening a past session
+                if (simulatorView && profileSection) {
+                    simulatorView.classList.remove('hidden');
+                    profileSection.classList.add('hidden');
+                }
                 displayPastSession(session.id);
             });
 
@@ -493,43 +513,281 @@ function getLocalProfileKey(userId) {
     return `profile:${userId}`;
 }
 
-function hydrateProfilePanel(currentUser) {
+async function fetchUserProfile(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('name, about, avatar_url, role, location, years_experience, skills, updated_at')
+            .eq('user_id', userId)
+            .single();
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error);
+        }
+        return data || null;
+    } catch (e) {
+        console.error('Unexpected profile fetch error:', e);
+        return null;
+    }
+}
+
+async function upsertUserProfile(userId, { name, about, avatar_url, role, location, years_experience, skills }) {
+    const payload = { user_id: userId, name, about, avatar_url, role, location, years_experience, skills, updated_at: new Date().toISOString() };
+    const { data, error } = await supabase.from('profiles').upsert(payload).select().single();
+    if (error) throw error;
+    return data;
+}
+
+async function hydrateProfilePanel(currentUser) {
     if (!profileEmailEl || !profileNameEl) return;
     const email = currentUser.email || '';
-    const nameFromEmail = email.includes('@') ? email.split('@')[0] : email;
-    const profileKey = getLocalProfileKey(currentUser.id);
-    let stored = {};
-    try {
-        stored = JSON.parse(localStorage.getItem(profileKey) || '{}');
-    } catch (_) {
-        stored = {};
-    }
-    const displayName = stored.name || nameFromEmail;
-    const about = stored.about || '';
+    const fallbackName = email.includes('@') ? email.split('@')[0] : email;
+    const prof = await fetchUserProfile(currentUser.id);
+    const displayName = prof?.name || fallbackName;
+    const about = prof?.about || '';
 
     profileNameEl.textContent = displayName;
     profileEmailEl.textContent = email;
     if (profileAboutTextarea) profileAboutTextarea.value = about;
+    if (profileRoleInput) profileRoleInput.value = prof?.role || '';
+    if (profileLocationInput) profileLocationInput.value = prof?.location || '';
+    if (profileYearsInput) profileYearsInput.value = typeof prof?.years_experience === 'number' ? prof.years_experience : '';
+    if (profileSkillsInput) profileSkillsInput.value = prof?.skills || '';
     if (profileAvatarEl) {
-        const initials = (displayName || email).trim().slice(0, 2).toUpperCase();
-        profileAvatarEl.textContent = initials;
+        profileAvatarEl.innerHTML = '';
+        if (prof?.avatar_url) {
+            const img = document.createElement('img');
+            img.src = prof.avatar_url;
+            img.className = 'h-full w-full object-cover';
+            img.alt = 'Avatar';
+            profileAvatarEl.appendChild(img);
+        } else {
+            const initials = (displayName || email).trim().slice(0, 2).toUpperCase();
+            profileAvatarEl.textContent = initials;
+        }
     }
 
-    if (profileSaveBtn) {
-        profileSaveBtn.onclick = () => {
-            const newAbout = profileAboutTextarea ? profileAboutTextarea.value : '';
-            const newName = displayName; // Could be extended to editable later
-            const payload = { name: newName, about: newAbout, updatedAt: new Date().toISOString() };
-            localStorage.setItem(profileKey, JSON.stringify(payload));
-            // Provide quick visual feedback
-            profileSaveBtn.textContent = 'Saved';
-            profileSaveBtn.disabled = true;
-            setTimeout(() => {
-                profileSaveBtn.textContent = 'Save';
-                profileSaveBtn.disabled = false;
-            }, 1200);
-        };
+    // Update top-right nav avatar
+    if (navProfileAvatar) {
+        navProfileAvatar.innerHTML = '';
+        if (prof?.avatar_url) {
+            const img = document.createElement('img');
+            img.src = prof.avatar_url;
+            img.className = 'h-full w-full object-cover';
+            img.alt = 'Avatar';
+            navProfileAvatar.appendChild(img);
+        } else {
+            const initials = (displayName || email).trim().slice(0, 2).toUpperCase();
+            navProfileAvatar.textContent = initials;
+        }
     }
+
+    // Do not bind save handler here; it's bound globally below to avoid duplicate listeners
+
+    // Load and render average score
+    const avg = await fetchUserAverageScore();
+    if (profileAvgScoreEl) profileAvgScoreEl.textContent = isNaN(avg) ? '--' : avg.toFixed(1);
+}
+
+// --- Avatar Upload + Crop ---
+let cropperInstance = null;
+
+function bindCropperControlsOnce() {
+    // Re-query in case modal was injected later
+    avatarCropModal = document.getElementById('avatar-crop-modal');
+    avatarCropImage = document.getElementById('avatar-crop-image');
+    avatarCropCancel = document.getElementById('avatar-crop-cancel');
+    avatarCropSave = document.getElementById('avatar-crop-save');
+    avatarCrop1x1 = document.getElementById('avatar-crop-1x1');
+    avatarCrop4x5 = document.getElementById('avatar-crop-4x5');
+    avatarCropFree = document.getElementById('avatar-crop-free');
+
+    if (avatarCropCancel && !avatarCropCancel._bound) {
+        avatarCropCancel.addEventListener('click', () => closeAvatarCropper());
+        avatarCropCancel._bound = true;
+    }
+    if (avatarCrop1x1 && !avatarCrop1x1._bound) {
+        avatarCrop1x1.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(1));
+        avatarCrop1x1._bound = true;
+    }
+    if (avatarCrop4x5 && !avatarCrop4x5._bound) {
+        avatarCrop4x5.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(4 / 5));
+        avatarCrop4x5._bound = true;
+    }
+    if (avatarCropFree && !avatarCropFree._bound) {
+        avatarCropFree.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(NaN));
+        avatarCropFree._bound = true;
+    }
+    if (avatarCropSave && !avatarCropSave._bound) {
+        avatarCropSave.addEventListener('click', onAvatarCropSave);
+        avatarCropSave._bound = true;
+    }
+}
+
+function openAvatarCropper(file) {
+    bindCropperControlsOnce();
+    if (!avatarCropModal || !avatarCropImage) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        avatarCropImage.src = reader.result;
+        avatarCropModal.classList.remove('hidden');
+        avatarCropModal.classList.add('flex');
+        // Use global Cropper from window to be safe in module scope
+        cropperInstance = new (window.Cropper || Cropper)(avatarCropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            background: false,
+            autoCropArea: 1,
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+async function uploadAvatarBlob(userId, blob) {
+    const fileName = `${userId}/${Date.now()}.png`;
+    const { data, error } = await supabase.storage.from('avatars').upload(fileName, blob, {
+        upsert: true,
+        contentType: 'image/png'
+    });
+    if (error) throw error;
+    // Some Supabase setups require bucket path without folder prefix in getPublicUrl
+    const uploadedPath = data?.path || fileName;
+    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(uploadedPath);
+    return publicUrlData.publicUrl;
+}
+
+function closeAvatarCropper() {
+    if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+    }
+    if (avatarCropModal) {
+        avatarCropModal.classList.add('hidden');
+        avatarCropModal.classList.remove('flex');
+    }
+}
+
+if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showMessage('Please select an image file.', 'error');
+            return;
+        }
+        openAvatarCropper(file);
+        // reset input so the same file can be chosen again later
+        e.target.value = '';
+    });
+}
+
+if (avatarCropCancel) {
+    avatarCropCancel.addEventListener('click', () => {
+        closeAvatarCropper();
+    });
+}
+
+if (avatarCrop1x1 && avatarCrop4x5 && avatarCropFree) {
+    avatarCrop1x1.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(1));
+    avatarCrop4x5.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(4 / 5));
+    avatarCropFree.addEventListener('click', () => cropperInstance && cropperInstance.setAspectRatio(NaN));
+}
+
+async function onAvatarCropSave() {
+    try {
+        if (!cropperInstance) {
+            console.warn('Cropper not initialized');
+            return;
+        }
+        if (!user) {
+            showMessage('Not signed in.', 'error');
+            return;
+        }
+        const canvas = cropperInstance.getCroppedCanvas({ width: 256, height: 256, imageSmoothing: true, imageSmoothingQuality: 'high' });
+        const blob = await new Promise((resolve) => canvas && canvas.toBlob ? canvas.toBlob(resolve, 'image/png') : resolve(null));
+        if (!blob) throw new Error('Failed to produce image');
+        const publicUrl = await uploadAvatarBlob(user.id, blob);
+        await upsertUserProfile(user.id, { name: profileNameEl.textContent.trim(), about: profileAboutTextarea.value, avatar_url: publicUrl, role: profileRoleInput?.value, location: profileLocationInput?.value, years_experience: profileYearsInput?.value ? Number(profileYearsInput.value) : undefined, skills: profileSkillsInput?.value });
+        // Update UI
+        profileAvatarEl.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = publicUrl;
+        img.className = 'h-full w-full object-cover';
+        profileAvatarEl.appendChild(img);
+        closeAvatarCropper();
+        showMessage('Avatar updated successfully.', 'info');
+        const avg = await fetchUserAverageScore();
+        if (profileAvgScoreEl) profileAvgScoreEl.textContent = isNaN(avg) ? '--' : avg.toFixed(1);
+    } catch (err) {
+        console.error('Avatar save error', err);
+        showMessage('Failed to update avatar.', 'error');
+    }
+}
+
+// Remove button removed from UI; keep handler disabled
+
+// --- Average score ---
+async function fetchUserAverageScore() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return NaN;
+        const res = await fetch(`${BACKEND_URL}/sessions`, {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        if (!res.ok) return NaN;
+        const all = await res.json();
+        if (!Array.isArray(all) || all.length === 0) return NaN;
+        const scores = all.map(s => Number(s.final_score)).filter(n => !isNaN(n));
+        if (scores.length === 0) return NaN;
+        const sum = scores.reduce((a, b) => a + b, 0);
+        return sum / scores.length;
+    } catch (e) {
+        console.error('Failed calculating avg score', e);
+        return NaN;
+    }
+}
+
+// --- Global Profile Save handler ---
+if (profileSaveBtn) {
+    profileSaveBtn.addEventListener('click', async () => {
+        try {
+            if (!user) {
+                showMessage('Not signed in.', 'error');
+                return;
+            }
+            const newName = (profileNameEl?.textContent || '').trim();
+            const newAbout = profileAboutTextarea ? profileAboutTextarea.value : '';
+            const role = profileRoleInput ? profileRoleInput.value : undefined;
+            const location = profileLocationInput ? profileLocationInput.value : undefined;
+            const years = profileYearsInput && profileYearsInput.value !== '' ? Number(profileYearsInput.value) : undefined;
+            const skills = profileSkillsInput ? profileSkillsInput.value : undefined;
+            profileSaveBtn.disabled = true;
+            profileSaveBtn.textContent = 'Saving...';
+            await upsertUserProfile(user.id, { name: newName, about: newAbout, avatar_url: undefined, role, location, years_experience: years, skills });
+            profileSaveBtn.textContent = 'Saved';
+            setTimeout(() => { profileSaveBtn.textContent = 'Save'; profileSaveBtn.disabled = false; }, 1000);
+            // Update initials if no avatar image present
+            if (profileAvatarEl && !profileAvatarEl.querySelector('img')) {
+                profileAvatarEl.textContent = (newName || (user.email || '')).trim().slice(0, 2).toUpperCase();
+            }
+            // Update average score after save
+            const avg = await fetchUserAverageScore();
+            if (profileAvgScoreEl) profileAvgScoreEl.textContent = isNaN(avg) ? '--' : avg.toFixed(1);
+        } catch (e) {
+            console.error('Profile save failed', e);
+            showMessage('Failed to save profile', 'error');
+            profileSaveBtn.textContent = 'Save';
+            profileSaveBtn.disabled = false;
+        }
+    });
+}
+
+// Click avatar to change image
+if (profileAvatarEl && avatarFileInput) {
+    profileAvatarEl.addEventListener('click', () => {
+        avatarFileInput.click();
+    });
+    profileAvatarEl.style.cursor = 'pointer';
 }
 
 // --- Confirm Modal Helper ---
@@ -652,11 +910,16 @@ startNewSessionBtn.addEventListener("click", () => {
 // --- Navigation Handlers ---
 if (navHomeBtn && navProfileBtn && simulatorView && profileSection) {
     navHomeBtn.addEventListener('click', () => {
+        // Show simulator/main session controls
         simulatorView.classList.remove('hidden');
         profileSection.classList.add('hidden');
+        sessionControls.classList.remove('hidden');
+        sessionGrade.classList.add('hidden');
+        individualFeedback.classList.add('hidden');
+        // Update nav button styles
         navHomeBtn.classList.add('bg-gray-800');
         navHomeBtn.classList.remove('bg-gray-700');
-        navProfileBtn.classList.remove('bg-gray-800');
+        navProfileBtn.classList.remove('bg-indigo-600');
     });
     navProfileBtn.addEventListener('click', () => {
         simulatorView.classList.add('hidden');
