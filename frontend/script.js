@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
     } else {
         user = session.user;
-        userEmailSpan.textContent = user.email;
+        if (userEmailSpan) userEmailSpan.textContent = '';
         await hydrateProfilePanel(user);
         appContainer.classList.remove('hidden');
         topNav.classList.remove('hidden');
