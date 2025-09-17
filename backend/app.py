@@ -380,7 +380,7 @@ def test_connection():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-// [ADDED] Register the API blueprint with the Flask app
+# [ADDED] Register the API blueprint with the Flask app
 app.register_blueprint(api_bp)  # [ADDED] Register the API blueprint with the Flask app
 
 if __name__ == "__main__":
