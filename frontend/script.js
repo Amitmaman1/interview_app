@@ -4,7 +4,7 @@ let supabase;
 let user = null;
 
 // Backend API URL
-const BACKEND_URL = "/api";
+const BACKEND_URL = "http://localhost:5000/api";
 
 let currentSessionQuestions = [];
 let totalQuestions = 0;
