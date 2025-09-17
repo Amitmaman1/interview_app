@@ -94,6 +94,7 @@ def get_user_from_token(request):
 
 # [MOVED] Config endpoint moved under /api via blueprint
 @api_bp.route("/config")
+@app.route("/config")  # [ADDED] Backward-compatible root route
 def get_config():
     return jsonify({
         "supabaseUrl": os.environ.get("SUPABASE_URL"),
@@ -112,6 +113,7 @@ def serve_static(path):
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/sessions", methods=["GET"])
+@app.route("/sessions", methods=["GET"])  # [ADDED] Backward-compatible root route
 def get_sessions():
     if not supabase:
         return jsonify({"error": "Database not configured"}), 500
@@ -129,6 +131,7 @@ def get_sessions():
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route('/sessions/<session_id>', methods=['GET'])
+@app.route('/sessions/<session_id>', methods=['GET'])  # [ADDED] Backward-compatible root route
 def get_single_session(session_id):
     user, error_response = get_user_from_token(request)
     if error_response:
@@ -145,6 +148,7 @@ def get_single_session(session_id):
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/questions", methods=["GET"])
+@app.route("/questions", methods=["GET"])  # [ADDED] Backward-compatible root route
 def get_questions():
     if not supabase:
         return jsonify({"error": "Database not configured"}), 500
@@ -175,6 +179,7 @@ def get_questions():
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/submit-answer", methods=["POST"])
+@app.route("/submit-answer", methods=["POST"])  # [ADDED] Backward-compatible root route
 def submit_answer():
     if not supabase or not groq_client:
         return jsonify({"error": "Service not configured"}), 500
@@ -231,6 +236,7 @@ def submit_answer():
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/submit-session", methods=["POST"])
+@app.route("/submit-session", methods=["POST"])  # [ADDED] Backward-compatible root route
 def submit_session():
     if not groq_client or not supabase:
         print("ERROR: Services not configured")  # Add logging
@@ -345,6 +351,7 @@ def submit_session():
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/sessions/all", methods=["DELETE"])
+@app.route("/sessions/all", methods=["DELETE"])  # [ADDED] Backward-compatible root route
 def delete_all_sessions():
 
     if not supabase:
@@ -373,6 +380,7 @@ def delete_all_sessions():
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/test-connection")
+@app.route("/test-connection")  # [ADDED] Backward-compatible root route
 def test_connection():
     try:
         response = supabase.from_("sessions").select("count").execute()
