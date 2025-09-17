@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Blueprint  # [CHANGED] Added Blueprint import
 from flask_cors import CORS
 from supabase import create_client, Client
 from groq import Groq
@@ -11,7 +11,10 @@ load_dotenv()
 
 # Initialize Flask and CORS
 app = Flask(__name__, static_folder='static')
-CORS(app)
+CORS(app)  # [UNCHANGED] Keep global CORS configuration
+
+# [ADDED] Create API blueprint with /api prefix
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 # Initialize Supabase client
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -89,22 +92,26 @@ def get_user_from_token(request):
     except Exception as e:
         return None, (jsonify({"error": f"Token validation failed: {str(e)}"}), 401)
 
-@app.route("/config")
+# [MOVED] Config endpoint moved under /api via blueprint
+@api_bp.route("/config")
 def get_config():
     return jsonify({
         "supabaseUrl": os.environ.get("SUPABASE_URL"),
         "supabaseAnonKey": os.environ.get("SUPABASE_ANON_KEY")
     })
 
+# [UNCHANGED] Keep static index at root level
 @app.route("/")
 def serve_frontend():
     return send_from_directory('static', 'index.html')
 
+# [UNCHANGED] Keep static assets at root level
 @app.route("/<path:path>")
 def serve_static(path):
     return send_from_directory('static', path)
 
-@app.route("/sessions", methods=["GET"])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/sessions", methods=["GET"])
 def get_sessions():
     if not supabase:
         return jsonify({"error": "Database not configured"}), 500
@@ -120,7 +127,8 @@ def get_sessions():
         print(f"Error fetching sessions: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route('/sessions/<session_id>', methods=['GET'])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route('/sessions/<session_id>', methods=['GET'])
 def get_single_session(session_id):
     user, error_response = get_user_from_token(request)
     if error_response:
@@ -135,7 +143,8 @@ def get_single_session(session_id):
 
     return jsonify(session.__dict__)
 
-@app.route("/questions", methods=["GET"])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/questions", methods=["GET"])
 def get_questions():
     if not supabase:
         return jsonify({"error": "Database not configured"}), 500
@@ -164,7 +173,8 @@ def get_questions():
         print(f"Error fetching questions: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route("/submit-answer", methods=["POST"])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/submit-answer", methods=["POST"])
 def submit_answer():
     if not supabase or not groq_client:
         return jsonify({"error": "Service not configured"}), 500
@@ -219,7 +229,8 @@ def submit_answer():
         print(f"Error processing submission: {e}")
         return jsonify({"error": f"An internal server error occurred: {str(e)}"}), 500
 
-@app.route("/submit-session", methods=["POST"])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/submit-session", methods=["POST"])
 def submit_session():
     if not groq_client or not supabase:
         print("ERROR: Services not configured")  # Add logging
@@ -332,7 +343,8 @@ def submit_session():
 
 
 
-@app.route("/sessions/all", methods=["DELETE"])
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/sessions/all", methods=["DELETE"])
 def delete_all_sessions():
 
     if not supabase:
@@ -359,13 +371,17 @@ def delete_all_sessions():
         print(f"Error deleting all sessions: {e}")
         return jsonify({"error": "An error occurred while deleting sessions"}), 500
 
-@app.route("/test-connection")
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/test-connection")
 def test_connection():
     try:
         response = supabase.from_("sessions").select("count").execute()
         return jsonify({"status": "connected", "data": response.data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+// [ADDED] Register the API blueprint with the Flask app
+app.register_blueprint(api_bp)  # [ADDED] Register the API blueprint with the Flask app
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
