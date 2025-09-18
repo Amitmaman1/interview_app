@@ -1,9 +1,10 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const BACKEND_URL = "http://localhost:5000/api";
-let supabase;
+const BACKEND_URL = "/api";
 
+let supabase;
+ 
 async function initializeSupabase() {
     if (supabase) {
         return supabase;

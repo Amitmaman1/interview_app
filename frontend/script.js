@@ -4,7 +4,8 @@ let supabase;
 let user = null;
 
 // Backend API URL
-const BACKEND_URL = "http://localhost:5000/api";
+const BACKEND_URL = "/api";
+
 
 let currentSessionQuestions = [];
 let totalQuestions = 0;
@@ -17,6 +18,27 @@ const topNav = document.getElementById('top-nav');
 const navHomeBtn = document.getElementById('nav-home-btn');
 const navProfileBtn = document.getElementById('nav-profile-btn');
 const navProfileAvatar = document.getElementById('nav-profile-avatar');
+
+async function renderNavAvatarFromProfile(userId, fallbackText) {
+    if (!navProfileAvatar || !supabase) return;
+    try {
+        navProfileAvatar.innerHTML = '';
+        if (fallbackText) navProfileAvatar.textContent = fallbackText;
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url, name')
+            .eq('user_id', userId)
+            .single();
+        if (!error && data?.avatar_url) {
+            const img = document.createElement('img');
+            img.src = data.avatar_url;
+            img.className = 'h-full w-full object-cover';
+            img.alt = 'Avatar';
+            navProfileAvatar.innerHTML = '';
+            navProfileAvatar.appendChild(img);
+        }
+    } catch {}
+}
 const loadingIndicator = document.getElementById('loading-indicator');
 const sidebar = document.getElementById('sidebar');
 const sessionList = document.getElementById('session-list');
@@ -94,25 +116,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         user = session.user;
         if (userEmailSpan) userEmailSpan.textContent = '';
+        const initials = ((user.email || 'U').trim().slice(0, 2) || 'U').toUpperCase();
         await hydrateProfilePanel(user);
+        await renderNavAvatarFromProfile(user.id, initials);
         appContainer.classList.remove('hidden');
         topNav.classList.remove('hidden');
         loadingIndicator.classList.add('hidden');
         await loadPastSessions();
+        const url = new URL(window.location.href);
+        const openSessionId = url.searchParams.get('session');
+        if (openSessionId) {
+            // Ensure simulator view visible
+            simulatorView?.classList.remove('hidden');
+            profileSection?.classList.add('hidden');
+            await displayPastSession(openSessionId);
+        }
     }
 });
 
-logoutBtn.addEventListener('click', async () => {
+if (logoutBtn) logoutBtn.addEventListener('click', async () => {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
     if (error) {
         console.error("Error signing out:", error);
     } else {
-        window.location.href = 'login.html';
+        window.location.href = '/login.html';
     }
 });
 
-deleteAllBtn.addEventListener('click', async () => {
+if (deleteAllBtn) deleteAllBtn.addEventListener('click', async () => {
     if (!supabase) return;
 
     const confirmed = await confirmAction({

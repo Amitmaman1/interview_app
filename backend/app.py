@@ -55,7 +55,21 @@ def get_session_by_id(session_id):
 
         if session_data:
             answers_response = supabase.from_("answers").select("*").eq("session_id", session_data['id']).execute()
-            answers_data = answers_response.data
+            answers_data = answers_response.data or []
+
+            # Enrich answers with question_text
+            try:
+                question_ids = [a.get('question_id') for a in answers_data if a.get('question_id') is not None]
+                if question_ids:
+                    # Fetch all related questions in one call
+                    questions_resp = supabase.from_("questions").select("id, question_text").in_("id", question_ids).execute()
+                    questions_map = {q['id']: q.get('question_text') for q in (questions_resp.data or [])}
+                    for a in answers_data:
+                        qid = a.get('question_id')
+                        a['question_text'] = questions_map.get(qid)
+            except Exception as _e:
+                # If enrichment fails, proceed without question_text
+                pass
 
             return Session(
                 session_data['id'],

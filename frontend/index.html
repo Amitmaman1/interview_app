@@ -16,10 +16,11 @@
                 <span class="font-semibold tracking-wide">DevOps Interview</span>
             </div>
             <nav class="flex items-center space-x-3">
-                <button id="nav-home-btn" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Home</button>
-                <button id="nav-profile-btn" class="rounded-full p-0 w-9 h-9 bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center">
+                <a id="nav-home-btn" href="/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Home</a>
+                <a id="nav-sessions-btn" href="/sessions/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Sessions</a>
+                <a id="nav-profile-btn" href="/profile/" class="rounded-full p-0 w-9 h-9 bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center">
                     <div id="nav-profile-avatar" class="h-7 w-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center overflow-hidden"></div>
-                </button>
+                </a>
             </nav>
         </div>
     </header>
@@ -139,72 +140,7 @@
 
             </div>
 
-            <!-- Profile View -->
-            <section id="profile-section" class="hidden w-full">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left column: Card with avatar and primary info -->
-                    <div class="lg:col-span-1 bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border border-gray-700 shadow-xl p-6">
-                        <div class="flex items-center gap-4">
-                            <div id="profile-avatar" class="relative group h-20 w-20 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl overflow-hidden cursor-pointer">
-                                <span class="pointer-events-none absolute inset-0 flex items-center justify-center text-3xl font-bold text-white/80 opacity-0 group-hover:opacity-100 transition-opacity">+</span>
-                            </div>
-                            <div class="min-w-0">
-                                <h2 id="profile-name" class="text-2xl font-semibold truncate" contenteditable="true">User</h2>
-                                <p id="profile-email" class="text-sm text-gray-400 truncate"></p>
-                            </div>
-                            <div class="ml-auto">
-                                <button id="logout-btn" class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-200 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12"/></svg>
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mt-6 grid grid-cols-1 gap-3">
-                            <div>
-                                <label class="text-xs text-gray-400">Role</label>
-                                <input id="profile-role" class="mt-1 w-full p-2 rounded-md border border-gray-600 bg-gray-800 text-gray-100" placeholder="e.g., DevOps Engineer" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Location</label>
-                                <input id="profile-location" class="mt-1 w-full p-2 rounded-md border border-gray-600 bg-gray-800 text-gray-100" placeholder="City, Country" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Years of Experience</label>
-                                <input id="profile-years" type="number" min="0" max="60" class="mt-1 w-full p-2 rounded-md border border-gray-600 bg-gray-800 text-gray-100" placeholder="0" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Key Skills</label>
-                                <input id="profile-skills" class="mt-1 w-full p-2 rounded-md border border-gray-600 bg-gray-800 text-gray-100" placeholder="Kubernetes, Terraform, AWS" />
-                            </div>
-                            <div class="mt-2 bg-gray-800 border border-gray-700 rounded-md p-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-300">Average Score</span>
-                                    <span id="profile-avg-score" class="text-xl font-semibold text-emerald-400">--</span>
-                                </div>
-                            </div>
-                            <input id="avatar-file" type="file" accept="image/*" class="hidden" />
-                        </div>
-                    </div>
-                    <!-- Right column: About and tips -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border border-gray-700 shadow-xl p-6">
-                            <label class="text-sm text-gray-300">About</label>
-                            <textarea id="profile-about" rows="10" class="mt-2 w-full p-4 border border-gray-600 rounded-lg bg-gray-800 text-gray-100 placeholder-gray-400" placeholder="Tell us about your experience and goals..."></textarea>
-                            <div class="mt-4 flex justify-end">
-                                <button id="profile-save" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">Save</button>
-                            </div>
-                        </div>
-                        <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border border-gray-700 shadow-xl p-6">
-                            <h3 class="text-lg font-semibold mb-2">Tips</h3>
-                            <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
-                                <li>Highlight recent projects and outcomes.</li>
-                                <li>Focus on reliability, automation, and scale.</li>
-                                <li>Set goals for topics to practice next.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Profile moved to /profile/ page -->
         </main>
     </div>
 

@@ -18,10 +18,10 @@ const showMessage = (text, type = 'info') => {
 };
 
 const navigateToApp = () => {
-    window.location.href = 'index.html';
+    window.location.href = '/';
 };
 
-const getRedirectUrl = () => `${window.location.origin}/login.html`;
+const getRedirectUrl = () => `${window.location.origin}/login/`;
 
 document.addEventListener('DOMContentLoaded', async () => {
     supabase = await initializeSupabase();
@@ -40,9 +40,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch {}
 
-    // Redirect to app as soon as OAuth completes
-    supabase.auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN') {
+    // Redirect to app only once a valid session exists
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
             navigateToApp();
         }
     });
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (error) {
                 console.error('OAuth exchange error:', error);
                 showMessage(`Authentication failed: ${error.message}`, 'error');
+                return;
             } else if (data?.session) {
                 navigateToApp();
                 return;
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     await new Promise(r => setTimeout(r, 150));
                 }
+                showMessage('Authentication failed. Please try signing in again.', 'error');
             }
         } catch (e) {
             console.error('OAuth exchange threw:', e);
