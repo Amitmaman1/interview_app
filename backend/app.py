@@ -67,7 +67,7 @@ def get_session_by_id(session_id):
                     for a in answers_data:
                         qid = a.get('question_id')
                         a['question_text'] = questions_map.get(qid)
-            except Exception as _e:
+            except Exception:
                 # If enrichment fails, proceed without question_text
                 pass
 
