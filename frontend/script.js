@@ -1,4 +1,4 @@
-import { initializeSupabase } from './auth.js';
+import { initializeSupabase } from './js/core/auth.js';
 
 let supabase;
 let user = null;
@@ -102,26 +102,41 @@ const confirmConfirmBtn = document.getElementById('confirm-confirm');
 // --- Initialization and Auth ---
 document.addEventListener('DOMContentLoaded', async () => {
     supabase = await initializeSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+        // Show login form if Supabase fails to initialize
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('loading-indicator').classList.add('hidden');
+        return;
+    }
 
     const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
         console.error("Error getting session:", error);
+        // Show login form on error
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('loading-indicator').classList.add('hidden');
         return;
     }
 
     if (!session) {
-        window.location.href = 'login.html';
+        // No session - show login form, hide app
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+        document.getElementById('top-nav').classList.add('hidden');
+        document.getElementById('loading-indicator').classList.add('hidden');
     } else {
+        // Has session - hide login form, show app
         user = session.user;
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        document.getElementById('top-nav').classList.remove('hidden');
+        document.getElementById('loading-indicator').classList.add('hidden');
+        
         if (userEmailSpan) userEmailSpan.textContent = '';
         const initials = ((user.email || 'U').trim().slice(0, 2) || 'U').toUpperCase();
         await hydrateProfilePanel(user);
         await renderNavAvatarFromProfile(user.id, initials);
-        appContainer.classList.remove('hidden');
-        topNav.classList.remove('hidden');
-        loadingIndicator.classList.add('hidden');
         await loadPastSessions();
         const url = new URL(window.location.href);
         const openSessionId = url.searchParams.get('session');
@@ -140,7 +155,7 @@ if (logoutBtn) logoutBtn.addEventListener('click', async () => {
     if (error) {
         console.error("Error signing out:", error);
     } else {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
     }
 });
 

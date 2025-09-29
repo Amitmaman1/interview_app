@@ -1,4 +1,4 @@
-import { initializeSupabase } from '/auth.js';
+import { initializeSupabase } from '/js/core/auth.js';
 
 let supabase;
 let user = null;
@@ -16,13 +16,14 @@ const profileSkillsInput = document.getElementById('profile-skills');
 const profileAvgScoreEl = document.getElementById('profile-avg-score');
 const avatarFileInput = document.getElementById('avatar-file');
 const logoutBtn = document.getElementById('logout-btn');
+const navProfileAvatar = document.getElementById('nav-profile-avatar');
 
 let avatarCropModal = document.getElementById('avatar-crop-modal');
 let avatarCropImage = document.getElementById('avatar-crop-image');
 let avatarCropCancel = document.getElementById('avatar-crop-cancel');
 let avatarCropSave = document.getElementById('avatar-crop-save');
 let avatarCrop1x1 = document.getElementById('avatar-crop-1x1');
-let avatarCrop4x5 = document.getElementById('avatar-crop-4x5');
+let avatarCrop4x5 = document.getElementById('avatar-crop-4x-5');
 let avatarCropFree = document.getElementById('avatar-crop-free');
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) return;
     if (!session) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
         return;
     }
     user = session.user;
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 if (logoutBtn) logoutBtn.addEventListener('click', async () => {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
-    if (!error) window.location.href = '/login.html';
+    if (!error) window.location.href = '/login';
 });
 
 function getLocalProfileKey(userId) {
@@ -120,6 +121,21 @@ async function hydrateProfilePanel(currentUser) {
 
     const avg = await fetchUserAverageScore();
     if (profileAvgScoreEl) profileAvgScoreEl.textContent = isNaN(avg) ? '--' : avg.toFixed(1);
+
+    // Update nav avatar on the profile page
+    if (navProfileAvatar) {
+        navProfileAvatar.innerHTML = '';
+        if (prof?.avatar_url) {
+            const img = document.createElement('img');
+            img.src = prof.avatar_url;
+            img.className = 'h-full w-full object-cover';
+            img.alt = 'Avatar';
+            navProfileAvatar.appendChild(img);
+        } else {
+            const initials = (displayName || email).trim().slice(0, 2).toUpperCase();
+            navProfileAvatar.textContent = initials;
+        }
+    }
 }
 
 let cropperInstance = null;
@@ -191,6 +207,17 @@ async function onAvatarCropSave() {
         img.src = publicUrl;
         img.className = 'h-full w-full object-cover';
         profileAvatarEl.appendChild(img);
+        
+        // Update nav avatar too
+        if (navProfileAvatar) {
+            navProfileAvatar.innerHTML = '';
+            const navImg = document.createElement('img');
+            navImg.src = publicUrl;
+            navImg.className = 'h-full w-full object-cover';
+            navImg.alt = 'Avatar';
+            navProfileAvatar.appendChild(navImg);
+        }
+        
         closeAvatarCropper();
     } catch (err) {
         console.error('Avatar save error', err);

@@ -67,7 +67,7 @@ def get_session_by_id(session_id):
                     for a in answers_data:
                         qid = a.get('question_id')
                         a['question_text'] = questions_map.get(qid)
-            except Exception:
+            except Exception as _e:
                 # If enrichment fails, proceed without question_text
                 pass
 
@@ -362,6 +362,32 @@ def submit_session():
 
 
 
+
+# [MOVED] API route moved to blueprint with /api prefix
+@api_bp.route("/sessions/<session_id>", methods=["DELETE"])
+@app.route("/sessions/<session_id>", methods=["DELETE"])  # [ADDED] Backward-compatible root route
+def delete_session(session_id):
+    """Delete a specific session by ID"""
+    if not supabase:
+        return jsonify({"error": "Database not configured"}), 500
+
+    user, error_response = get_user_from_token(request)
+    if error_response:
+        return error_response
+
+    try:
+        # Delete the specific session for the given user
+        response = supabase.from_("sessions").delete().eq('id', session_id).eq('user_id', user.id).execute()
+
+        # Check for errors in the response
+        if hasattr(response, 'error') and response.error:
+            raise Exception(response.error.message)
+
+        return jsonify({"message": "Session deleted successfully"}), 200
+
+    except Exception as e:
+        print(f"Error deleting session {session_id}: {e}")
+        return jsonify({"error": "An error occurred while deleting the session"}), 500
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route("/sessions/all", methods=["DELETE"])

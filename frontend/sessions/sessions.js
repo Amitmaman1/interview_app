@@ -1,16 +1,16 @@
-import { initializeSupabase } from '/auth.js';
+import { initializeSupabase } from '/js/core/auth.js';
 
 const BACKEND_URL = '/api';
 
 let supabase;
 let user = null;
 
-const sessionList = document.getElementById('session-list');
+const sessionList = document.getElementById('sessions-container');
 const navProfileAvatar = document.getElementById('nav-profile-avatar');
 const userEmailSpan = document.getElementById('user-email');
 const deleteAllBtn = document.getElementById('delete-all-btn');
 const messageBox = document.getElementById('message-box');
-const sessionDetail = document.getElementById('session-detail');
+const sessionDetail = document.getElementById('session-details');
 
 const confirmModal = document.getElementById('confirm-modal');
 const confirmMessageEl = document.getElementById('confirm-message');
@@ -19,17 +19,25 @@ const confirmConfirmBtn = document.getElementById('confirm-confirm');
 
 document.addEventListener('DOMContentLoaded', async () => {
     supabase = await initializeSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+        window.location.href = '/login';
+        return;
+    }
 
+    // Check current session first
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
         console.error('Error getting session:', error);
+        window.location.href = '/login';
         return;
     }
+
     if (!session) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
         return;
     }
+
+    // Set user and load sessions
     user = session.user;
     if (userEmailSpan) userEmailSpan.textContent = user.email || '';
     if (navProfileAvatar) {
@@ -44,8 +52,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 img.alt = 'Avatar';
                 navProfileAvatar.appendChild(img);
             }
-        } catch {}
+        } catch (e) {
+            console.error('Error loading profile:', e);
+        }
     }
+    
     await loadSessions();
 });
 
@@ -79,22 +90,34 @@ if (deleteAllBtn) deleteAllBtn.addEventListener('click', async () => {
 
 async function loadSessions() {
     if (!supabase || !user) return;
+    
     try {
+        // Show loading state
+        sessionList.innerHTML = '<div class="flex items-center justify-center py-12"><div class="text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div><p class="text-gray-400">Loading sessions...</p></div></div>';
+        
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('User not authenticated');
+        
         const response = await fetch(`${BACKEND_URL}/sessions`, {
             headers: { 'Authorization': `Bearer ${session.access_token}` }
         });
+        
         if (!response.ok) throw new Error('Failed to fetch sessions');
+        
         const data = await response.json();
+        
+        // Clear loading state and show content
         sessionList.innerHTML = '';
+        
         if (!Array.isArray(data) || data.length === 0) {
-            sessionList.innerHTML = '<p class="text-sm text-gray-500">No past sessions found.</p>';
+            sessionList.innerHTML = '<div class="text-center py-12"><p class="text-gray-400">No past sessions found.</p><p class="text-sm text-gray-500 mt-2">Start your first interview session to see it here.</p></div>';
             return;
         }
+        
         data.forEach(s => {
             const row = document.createElement('div');
-            row.className = 'flex items-center justify-between p-3 rounded-md bg-gray-800 border border-gray-700';
+            row.className = 'flex items-center justify-between p-3 rounded-md bg-gray-800 border border-gray-700 mb-2';
+            
             const link = document.createElement('a');
             link.href = '#';
             link.className = 'text-sm text-indigo-300 hover:text-indigo-200 truncate flex-1';
@@ -105,8 +128,9 @@ async function loadSessions() {
                 e.preventDefault();
                 await displaySessionDetail(s.id);
             });
+            
             const del = document.createElement('button');
-            del.className = 'ml-3 text-red-400 hover:text-red-300';
+            del.className = 'ml-3 text-red-400 hover:text-red-300 px-2 py-1 rounded';
             del.innerHTML = '&times;';
             del.title = 'Delete session';
             del.addEventListener('click', async (e) => {
@@ -114,13 +138,14 @@ async function loadSessions() {
                 e.stopPropagation();
                 await deleteSession(s.id);
             });
+            
             row.appendChild(link);
             row.appendChild(del);
             sessionList.appendChild(row);
         });
     } catch (e) {
-        console.error('Error fetching sessions:', e);
-        showMessage('Could not load past sessions.', 'error');
+        console.error('Error loading sessions:', e);
+        sessionList.innerHTML = '<div class="text-center py-12"><p class="text-red-400">Error loading sessions.</p><p class="text-sm text-gray-500 mt-2">Please try refreshing the page.</p></div>';
     }
 }
 
@@ -178,7 +203,6 @@ async function displaySessionDetail(sessionId) {
 
 function renderSessionDetail(data) {
     if (!sessionDetail) return;
-    sessionDetail.classList.remove('hidden');
     const answers = Array.isArray(data.answers) ? data.answers : [];
     const items = answers.map((a, idx) => `
         <div class="bg-gray-700 p-4 rounded-lg border border-gray-600 space-y-2">

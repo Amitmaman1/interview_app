@@ -1,4 +1,4 @@
-import { initializeSupabase } from './auth.js';
+import { initializeSupabase } from './js/core/auth.js';
 
 const googleSignInBtn = document.getElementById('google-signin-btn');
 const githubSignInBtn = document.getElementById('github-signin-btn');
