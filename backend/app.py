@@ -67,7 +67,7 @@ def get_session_by_id(session_id):
                     for a in answers_data:
                         qid = a.get('question_id')
                         a['question_text'] = questions_map.get(qid)
-            except Exception as _e:
+            except Exception:
                 # If enrichment fails, proceed without question_text
                 pass
 
@@ -142,6 +142,7 @@ def get_sessions():
     except Exception as e:
         print(f"Error fetching sessions: {e}")
         return jsonify({"error": "Internal server error"}), 500
+        
 
 # [MOVED] API route moved to blueprint with /api prefix
 @api_bp.route('/sessions/<session_id>', methods=['GET'])
