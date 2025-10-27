@@ -103,9 +103,8 @@ const confirmConfirmBtn = document.getElementById('confirm-confirm');
 document.addEventListener('DOMContentLoaded', async () => {
     supabase = await initializeSupabase();
     if (!supabase) {
-        // Show login form if Supabase fails to initialize
-        document.getElementById('login-section').classList.remove('hidden');
-        document.getElementById('loading-indicator').classList.add('hidden');
+        // Redirect to login if Supabase fails to initialize
+        window.location.href = '/login';
         return;
     }
 
@@ -113,18 +112,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (error) {
         console.error("Error getting session:", error);
-        // Show login form on error
-        document.getElementById('login-section').classList.remove('hidden');
-        document.getElementById('loading-indicator').classList.add('hidden');
+        // Redirect to login on error
+        window.location.href = '/login';
         return;
     }
 
     if (!session) {
-        // No session - show login form, hide app
-        document.getElementById('login-section').classList.remove('hidden');
-        document.getElementById('app-container').classList.add('hidden');
-        document.getElementById('top-nav').classList.add('hidden');
-        document.getElementById('loading-indicator').classList.add('hidden');
+        // No session - redirect to login page
+        window.location.href = '/login';
+        return;
     } else {
         // Has session - hide login form, show app
         user = session.user;
