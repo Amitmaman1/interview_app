@@ -55,9 +55,10 @@ jobs:
           --health-retries 5
 
     env:
-      SUPABASE_URL: "https://dummy.supabase.co"
-      SUPABASE_KEY: "dummy-key"
-      GROQ_API_KEY: "dummy-key"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
 
     steps:
