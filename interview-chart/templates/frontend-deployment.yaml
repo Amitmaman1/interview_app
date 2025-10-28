@@ -13,6 +13,9 @@ spec:
       labels:
         app: {{ .Values.frontend.name }}
     spec:
+{{- if or .Values.serviceAccount.create (.Values.serviceAccountName) }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default .Values.serviceAccountName | default "default" }}
+{{- end }}
       containers:
       - name: {{ .Values.frontend.name }}
         image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
