@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions - DevOps Interview Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <header class="sticky top-0 z-20 bg-gray-900/80 backdrop-blur border-b border-gray-800">
+        <div class="w-full px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-8 w-8 rounded-md bg-indigo-600 flex items-center justify-center font-bold">DI</div>
+                <span class="font-semibold tracking-wide">DevOps Interview</span>
+            </div>
+            <nav class="flex items-center space-x-3">
+                <a href="../" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Home</a>
+                <a href="./" class="px-3 py-2 rounded-md text-sm font-medium bg-indigo-600 border border-gray-700">Sessions</a>
+                <a href="../profile/" class="rounded-full p-0 w-9 h-9 bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center">
+                    <div id="nav-profile-avatar" class="h-7 w-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center overflow-hidden"></div>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="p-4 sm:p-8 max-w-6xl mx-auto">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-100">Past Sessions</h1>
+            <p class="text-gray-400 mt-2">Review your interview sessions and track your progress</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Sessions List -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-200">Your Sessions</h2>
+                <div id="sessions-container" class="space-y-4">
+                    <!-- Sessions will be loaded here -->
+                    <div class="flex items-center justify-center py-12">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                            <p class="text-gray-400">Loading sessions...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Details -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-semibold text-gray-200">Session Details</h2>
+                <div id="session-details" class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl border border-gray-700 p-6">
+                    <div class="text-center py-12">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-400">Select a session to view details</p>
+                        <p class="text-sm text-gray-500 mt-2">Click on any session from the list to see questions, answers, and feedback</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-semibold mb-2">Confirm action</h3>
+            <p id="confirm-message" class="text-sm text-gray-300 mb-4"></p>
+            <div class="flex justify-end gap-2">
+                <button id="confirm-cancel" class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600">Cancel</button>
+                <button id="confirm-confirm" class="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="sessions.js"></script>
+</body>
+</html>

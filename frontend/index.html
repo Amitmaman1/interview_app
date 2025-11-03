@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Interview Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <!-- Login Section -->
+    <div id="login-section" class="flex items-center justify-center min-h-screen p-4 hidden">
+        <div class="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <h1 class="text-3xl font-bold mb-6 text-center text-gray-100">DevOps Interview Simulator</h1>
+            <p class="text-center text-gray-400 mb-6">Please sign in to continue</p>
+            
+            <div id="login-message-box" class="mt-4 p-4 rounded-md text-sm text-center hidden text-gray-100"></div>
+
+            <div class="space-y-3">
+                <button id="google-signin-btn" type="button" class="w-full flex items-center justify-center bg-gray-700 border border-gray-600 hover:bg-gray-600 text-gray-100 font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                    <svg class="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8S109.8 11.8 244 11.8C381.5 11.8 488 120.7 488 261.8zM100.2 261.8c0 25.4 4.9 50.1 13.9 73.4l-73.4 22.4C15.3 330.2 0 297.3 0 261.8s15.3-68.4 40.7-95.8l73.4 22.4c-9 23.3-13.9 48-13.9 73.4z"></path></svg>
+                    Sign in with Google
+                </button>
+                <button id="github-signin-btn" type="button" class="w-full flex items-center justify-center bg-gray-700 border border-gray-600 hover:bg-gray-600 text-gray-100 font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                    <svg class="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.1.3-5.4-1.3-5.4-3.6 0-2 2.3-3.6 5.2-3.6 2.8-.3 5.4 1.3 5.4 3.6zm-31.1-1.7c-.7 2 1.3 4.3 4.3 4.9 2.8 1 6.1 0 6.7-2s-1.3-4.3-4.3-5.2c-3-.7-6.1.3-6.7 2.3zm44.2-1.2c-2.9.7-4.9 2.6-4.6 4.6.3 2 3.1 3.3 6.1 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3.1-3.2-6.1-2.6zM244 8C104.9 8 0 113.1 0 252.2c0 108.6 69.8 200.6 166.5 233.1 12.3 2.3 16.8-5.4 16.8-11.7 0-5.7-.3-24.6-.3-44.9-61.1 13.2-74-26.1-74-26.1-11.1-28.6-27.4-36.3-27.4-36.3-22.6-15.4 1.7-15.1 1.7-15.1 25.1 1.7 38.3 25.7 38.3 25.7 22 38.6 57.6 27.4 71.7 20.9 2.3-15.9 8.6-27.4 15.4-33.7-48.8-5.4-100.2-24.6-100.2-109.3 0-24.3 8.6-44.2 22.8-59.8-2.3-5.4-10-28 2.3-58.1 0 0 18.8-5.7 61.4 22.8 18-5.1 37.1-7.7 56.2-7.7 19.1 0 38.3 2.6 56.2 7.7 42.6-28.6 61.4-22.8 61.4-22.8 12.6 30.1 4.9 52.4 2.3 58.1 14.3 15.7 22.8 35.7 22.8 59.8 0 84.9-51.7 103.6-100.8 109.3 8.9 7.7 16.8 22.6 16.8 45.7 0 33.7-.3 60.7-.3 69 0 6.7 4.6 14.3 16.8 11.7C426.2 452.8 496 360.8 496 252.2 496 113.1 383.1 8 244 8z"></path></svg>
+                    Sign in with GitHub
+                </button>
+                <div class="flex items-center my-4">
+                    <div class="flex-grow h-px bg-gray-700"></div>
+                    <span class="px-3 text-gray-400 text-xs">or</span>
+                    <div class="flex-grow h-px bg-gray-700"></div>
+                </div>
+                <form id="email-auth-form" class="space-y-3">
+                    <input id="email-input" type="email" placeholder="Email" class="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600" required>
+                    <input id="password-input" type="password" placeholder="Password" class="w-full bg-gray-700 border border-gray-600 text-gray-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600" required>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="email-signin-btn" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md">Sign In</button>
+                        <button id="email-signup-btn" type="button" class="w-full bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-100 font-semibold py-2 px-4 rounded-md">Sign Up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <header id="top-nav" class="hidden sticky top-0 z-20 bg-gray-900/80 backdrop-blur border-b border-gray-800">
+        <div class="w-full px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-8 w-8 rounded-md bg-indigo-600 flex items-center justify-center font-bold">DI</div>
+                <span class="font-semibold tracking-wide">DevOps Interview</span>
+            </div>
+            <nav class="flex items-center space-x-3">
+                <a id="nav-home-btn" href="/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Home</a>
+                <a id="nav-sessions-btn" href="/sessions/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700">Sessions</a>
+                <a id="nav-profile-btn" href="/profile/" class="rounded-full p-0 w-9 h-9 bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center">
+                    <div id="nav-profile-avatar" class="h-7 w-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center overflow-hidden"></div>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- App container -->
+    <div id="app-container" class="flex h-screen hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-64 bg-gray-800 border-r border-gray-700 p-4 flex flex-col">
+            <h2 class="text-xl font-bold text-gray-100 mb-4">Past Sessions</h2>
+            <div id="session-list" class="flex-grow overflow-y-auto">
+                <!-- Session links will be injected here -->
+            </div>
+            <div class="mt-4">
+                <p id="user-email" class="text-sm text-gray-400 truncate"></p>
+                <button id="delete-all-btn" class="w-full mt-4 bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                    Delete All Sessions
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4 sm:p-8 overflow-y-auto">
+            <!-- Simulator View -->
+            <div id="simulator-view" class="w-full bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-8 rounded-2xl shadow-2xl border border-gray-700">
+                <h1 class="text-3xl font-bold mb-6 text-center text-gray-100">DevOps Interview Simulator</h1>
+
+                <!-- Session Controls -->
+                <div id="session-controls" class="mb-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                        <div class="flex-1">
+                            <label for="topic-select" class="block text-sm font-medium text-gray-300">Topic</label>
+                            <select id="topic-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm bg-gray-700 text-gray-100">
+                                <option value="CI/CD">CI/CD</option>
+                                <option value="Infrastructure as Code">Infrastructure as Code</option>
+                                <option value="Kubernetes">Kubernetes</option>
+                                <option value="Cloud (AWS)">Cloud (AWS)</option>
+                                <option value="Monitoring & Alerting">Monitoring & Alerting</option>
+                                <option value="Linux">Linux</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label for="difficulty-select" class="block text-sm font-medium text-gray-300">Difficulty</label>
+                            <select id="difficulty-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm bg-gray-700 text-gray-100">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Expert">Expert</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label for="num-questions" class="block text-sm font-medium text-gray-300">Number of Questions</label>
+                            <input type="number" id="num-questions" value="5" min="1" max="10" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm bg-gray-700 text-gray-100">
+                        </div>
+                    </div>
+                    <button id="start-session-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                        Start Session
+                    </button>
+                </div>
+
+                <!-- Question and Answer Form -->
+                <div id="question-area" class="space-y-4 border-t pt-6 border-gray-700 hidden">
+                    <p class="text-sm text-gray-400 text-center mb-4">Question <span id="current-question-num">1</span> of <span id="total-questions-num">5</span></p>
+                    <h2 class="text-xl font-semibold text-gray-200">Question</h2>
+                    <div id="question-text" class="bg-gray-700 p-4 rounded-lg text-gray-100 border border-gray-600">
+                        <!-- Question will be displayed here -->
+                    </div>
+                    
+                    <h2 class="text-xl font-semibold text-gray-200">Your Answer</h2>
+                    <form id="answer-form" class="space-y-4">
+                        <textarea id="user-answer" class="w-full p-3 border border-gray-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition-shadow duration-200 bg-gray-700 text-gray-100" rows="8" placeholder="Type your answer here..."></textarea>
+                        <div class="flex space-x-4">
+                            <button id="submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                                Submit Answer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Individual Feedback Section (shown after each question) -->
+                <div id="individual-feedback" class="space-y-4 mt-6 pt-6 border-t border-gray-700 hidden">
+                    <h2 class="text-xl font-semibold text-gray-200">AI Feedback for this question</h2>
+                    <div class="bg-blue-900 p-4 rounded-lg border border-blue-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-blue-200">Score: <span id="feedback-score" class="font-bold"></span> / 10</h3>
+                        </div>
+                        <p id="feedback-summary" class="text-sm text-blue-100 whitespace-pre-wrap"></p>
+                        <div class="p-3 bg-blue-800 rounded-md mt-4">
+                            <h4 class="font-semibold text-blue-200">Corrections and Key Points</h4>
+                            <p id="feedback-corrections" class="text-sm text-blue-100 whitespace-pre-wrap"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Grade Section (shown at the end) -->
+                <div id="session-grade" class="space-y-4 mt-6 pt-6 border-t border-gray-700 hidden">
+                    <h2 class="text-xl font-bold text-center text-emerald-700">Session Complete!</h2>
+                    <h3 class="text-2xl font-bold text-center text-emerald-50">Your Final Grade: <span id="final-score"></span> / 10</h3>
+                    <div class="bg-emerald-900 p-4 rounded-lg border border-emerald-700 space-y-2">
+                        <h4 class="text-lg font-medium text-emerald-200">Overall Feedback</h4>
+                        <p id="final-feedback" class="text-sm text-emerald-100"></p>
+                    </div>
+                     
+                    <!-- New section to show a summary of all questions and answers -->
+                    <div id="session-summary" class="mt-6 space-y-6">
+                        <h2 class="text-2xl font-semibold text-gray-200">Session Review</h2>
+                        <div id="session-answers-list" class="space-y-8">
+                            <!-- The summary of all questions, user answers, and feedback will be dynamically inserted here -->
+                        </div>
+                    </div>
+
+                    <button id="start-new-session-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-colors duration-200">
+                        Start a New Session
+                    </button>
+                </div>
+
+                <!-- Loading and Error States -->
+                <div id="message-box" class="mt-4 p-4 rounded-md text-sm text-center hidden text-gray-100"></div>
+
+            </div>
+
+            <!-- Profile moved to /profile/ page -->
+        </main>
+    </div>
+
+    <!-- Loading indicator shown before the app is ready -->
+    <div id="loading-indicator" class="flex items-center justify-center min-h-screen">
+        <p class="text-lg text-gray-400">Loading...</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet" />
+    <script type="module" src="script.js"></script>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-semibold mb-2">Confirm action</h3>
+            <p id="confirm-message" class="text-sm text-gray-300 mb-4"></p>
+            <div class="flex justify-end gap-2">
+                <button id="confirm-cancel" class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600">Cancel</button>
+                <button id="confirm-confirm" class="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Crop Modal -->
+    <div id="avatar-crop-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 w-full max-w-2xl shadow-2xl">
+            <h3 class="text-lg font-semibold mb-3">Crop your avatar</h3>
+            <div class="relative bg-gray-800 border border-gray-700 rounded-md overflow-hidden">
+                <img id="avatar-crop-image" alt="Crop source" class="max-h-[60vh] w-full object-contain" />
+            </div>
+            <div class="flex flex-wrap gap-2 justify-between items-center mt-4">
+                <div class="flex gap-2">
+                    <button id="avatar-crop-1x1" class="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-sm">1:1</button>
+                    <button id="avatar-crop-4x5" class="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-sm">4:5</button>
+                    <button id="avatar-crop-free" class="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-sm">Free</button>
+                </div>
+                <div class="flex gap-2">
+                    <button id="avatar-crop-cancel" class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600">Cancel</button>
+                    <button id="avatar-crop-save" class="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

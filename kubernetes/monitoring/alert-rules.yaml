@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: main-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: main.rules
+    rules:
+    - alert: HostHighCpuLoad
+      expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 50
+      for: 2m
+      labels:
+        severity: warning
+        namespace: monitoring 
+      annotations:
+        description:	Configuration has failed to load for {{ $labels.namespace }}/{{ $labels.pod}}.
+        summary:	"cpu load on host is over 50%\ Value = {{$value}}\n"
