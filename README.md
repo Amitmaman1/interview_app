@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# devops interviewer application
-=======
+
 # DevOps Interview Practice App
 
 A web app I built to practice DevOps interview questions. It uses AI to generate questions and provide feedback on your answers. Built with Flask, vanilla JS, and deployed on Kubernetes.
