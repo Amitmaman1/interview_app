@@ -331,7 +331,7 @@ def submit_session():
 
         new_session_id = session_insert_response.data[0]['id']
         print(f"New session ID: {new_session_id}")
- 
+  
         # 2. Prepare and insert all answers
         answers_to_insert = []
         for item in session_answers:
